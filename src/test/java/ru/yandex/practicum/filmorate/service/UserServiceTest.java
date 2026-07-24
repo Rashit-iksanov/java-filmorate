@@ -33,7 +33,7 @@ class UserServiceTest {
         return user;
     }
 
-    // --- Создание пользователя ---
+    // Создание пользователя
 
     @Test
     void create_validUser_shouldReturnUserWithId() {
@@ -103,7 +103,7 @@ class UserServiceTest {
         assertEquals("ivan", created.getName());
     }
 
-    // --- Обновление пользователя ---
+    // Обновление пользователя
 
     @Test
     void update_existingUser_shouldUpdate() {
@@ -121,7 +121,7 @@ class UserServiceTest {
         assertThrows(NotFoundException.class, () -> userService.update(user));
     }
 
-    // --- Новая логика: Друзья ---
+    // Друзья
 
     @Test
     void addFriend_validUsers_shouldAddToBothSets() {
@@ -147,18 +147,21 @@ class UserServiceTest {
         User user1 = userService.create(createValidUser()); // Иван
 
         User user2 = createValidUser();
-        user2.setEmail("anna@mail.ru"); user2.setLogin("anna");
+        user2.setEmail("anna@mail.ru");
+        user2.setLogin("anna");
         User anna = userService.create(user2);
 
         User user3 = createValidUser();
-        user3.setEmail("petr@mail.ru"); user3.setLogin("petr");
+        user3.setEmail("petr@mail.ru");
+        user3.setLogin("petr");
         User petr = userService.create(user3);
 
         userService.addFriend(user1.getId(), anna.getId());
         userService.addFriend(user1.getId(), petr.getId());
 
         User user4 = createValidUser();
-        user4.setEmail("olga@mail.ru"); user4.setLogin("olga");
+        user4.setEmail("olga@mail.ru");
+        user4.setLogin("olga");
         User olga = userService.create(user4);
         userService.addFriend(olga.getId(), anna.getId());
 

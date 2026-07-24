@@ -20,7 +20,6 @@ class FilmServiceTest {
 
     @BeforeEach
     void setUp() {
-        // Ручное внедрение зависимостей (имитация Spring DI)
         filmStorage = new InMemoryFilmStorage();
         filmService = new FilmService(filmStorage);
     }
@@ -34,7 +33,7 @@ class FilmServiceTest {
         return film;
     }
 
-    // --- Создание фильма ---
+    // Создание фильма
 
     @Test
     void create_validFilm_shouldReturnFilmWithId() {
@@ -110,7 +109,7 @@ class FilmServiceTest {
         assertThrows(ValidationException.class, () -> filmService.create(film));
     }
 
-    // --- Обновление фильма ---
+    // Обновление фильма
 
     @Test
     void update_existingFilm_shouldUpdate() {
@@ -127,12 +126,10 @@ class FilmServiceTest {
     void update_nonExistingFilm_shouldThrowNotFoundException() {
         Film film = createValidFilm();
         film.setId(999); // ID, которого нет в хранилище
-
-        // ВАЖНО: Ожидаем NotFoundException (404), а не ValidationException (400)
         assertThrows(NotFoundException.class, () -> filmService.update(film));
     }
 
-    // --- Получение списка ---
+    // Получение списка
 
     @Test
     void findAll_emptyStorage_shouldReturnEmptyCollection() {
@@ -146,7 +143,7 @@ class FilmServiceTest {
         assertEquals(2, filmService.findAll().size());
     }
 
-    // --- Новая логика: Лайки и Популярное ---
+    // Лайки и Популярное
 
     @Test
     void addLike_shouldAddUserIdToLikesSet() {
