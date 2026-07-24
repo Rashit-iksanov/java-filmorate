@@ -37,6 +37,7 @@ class FilmServiceTest {
         film.setDuration(136);
         return film;
     }
+
     private User createValidUser() {
         User user = new User();
         user.setEmail("test@mail.ru");
@@ -47,7 +48,6 @@ class FilmServiceTest {
     }
 
     // Создание фильма
-
     @Test
     void create_validFilm_shouldReturnFilmWithId() {
         Film film = createValidFilm();
@@ -123,7 +123,6 @@ class FilmServiceTest {
     }
 
     // Обновление фильма
-
     @Test
     void update_existingFilm_shouldUpdate() {
         Film film = createValidFilm();
@@ -143,7 +142,6 @@ class FilmServiceTest {
     }
 
     // Получение списка
-
     @Test
     void findAll_emptyStorage_shouldReturnEmptyCollection() {
         assertTrue(filmService.findAll().isEmpty());
@@ -157,7 +155,6 @@ class FilmServiceTest {
     }
 
     // Лайки и Популярное
-
     @Test
     void addLike_shouldAddUserIdToLikesSet() {
         Film film = filmService.create(createValidFilm());
