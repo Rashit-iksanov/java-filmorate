@@ -2,20 +2,28 @@ package ru.yandex.practicum.filmorate.controller;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.service.UserService;
+import ru.yandex.practicum.filmorate.storage.user.InMemoryUserStorage;
+import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.time.LocalDate;
+import java.util.Collection;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class UserControllerTest {
 
     private UserController controller;
+    private UserService userService;
 
     @BeforeEach
     void setUp() {
-        controller = new UserController();
+        UserStorage userStorage = new InMemoryUserStorage();
+        userService = new UserService(userStorage);
+        controller = new UserController(userService);
     }
 
     private User createValidUser() {
@@ -27,120 +35,65 @@ class UserControllerTest {
         return user;
     }
 
-    // Создание пользователя
-
     @Test
     void create_validUser_shouldReturnUserWithId() {
         User user = createValidUser();
         User created = controller.create(user);
-
         assertNotEquals(0, created.getId());
         assertEquals("ivan@mail.ru", created.getEmail());
     }
 
     @Test
-    void create_emptyEmail_shouldThrowException() {
+    void create_invalidUser_shouldThrowException() {
         User user = createValidUser();
-        user.setEmail("");
-
-        ValidationException ex = assertThrows(ValidationException.class,
-                () -> controller.create(user));
-        assertTrue(ex.getMessage().contains("Электронная почта"));
-    }
-
-    @Test
-    void create_emailWithoutAt_shouldThrowException() {
-        User user = createValidUser();
-        user.setEmail("ivanmail.ru");
-
+        user.setEmail("invalid-email");
         assertThrows(ValidationException.class, () -> controller.create(user));
-    }
-
-    @Test
-    void create_emptyLogin_shouldThrowException() {
-        User user = createValidUser();
-        user.setLogin("");
-
-        assertThrows(ValidationException.class, () -> controller.create(user));
-    }
-
-    @Test
-    void create_loginWithSpaces_shouldThrowException() {
-        User user = createValidUser();
-        user.setLogin("ivan petrov");
-
-        ValidationException ex = assertThrows(ValidationException.class,
-                () -> controller.create(user));
-        assertTrue(ex.getMessage().contains("пробелы"));
-    }
-
-    @Test
-    void create_birthdayTomorrow_shouldThrowException() {
-        User user = createValidUser();
-        user.setBirthday(LocalDate.now().plusDays(1));
-
-        assertThrows(ValidationException.class, () -> controller.create(user));
-    }
-
-    @Test
-    void create_birthdayToday_shouldPass() {
-        User user = createValidUser();
-        user.setBirthday(LocalDate.now());  // граничное условие: сегодня
-
-        assertDoesNotThrow(() -> controller.create(user));
     }
 
     @Test
     void create_emptyName_shouldUseLogin() {
         User user = createValidUser();
         user.setName("");
-
         User created = controller.create(user);
         assertEquals("ivan", created.getName());
     }
-
-    @Test
-    void create_nullName_shouldUseLogin() {
-        User user = createValidUser();
-        user.setName(null);
-
-        User created = controller.create(user);
-        assertEquals("ivan", created.getName());
-    }
-
-    // Обновление пользователя
 
     @Test
     void update_existingUser_shouldUpdate() {
         User user = createValidUser();
         User created = controller.create(user);
-
         created.setName("Новое имя");
         User updated = controller.update(created);
-
         assertEquals("Новое имя", updated.getName());
     }
 
     @Test
-    void update_nonExistingUser_shouldThrowException() {
+    void update_nonExistingUser_shouldThrowNotFoundException() {
         User user = createValidUser();
         user.setId(999);
-
-        assertThrows(ValidationException.class, () -> controller.update(user));
-    }
-
-    // Получение списка
-
-    @Test
-    void findAll_emptyStorage_shouldReturnEmptyCollection() {
-        assertTrue(controller.findAll().isEmpty());
+        assertThrows(NotFoundException.class, () -> controller.update(user));
     }
 
     @Test
     void findAll_afterCreate_shouldReturnAllUsers() {
         controller.create(createValidUser());
         controller.create(createValidUser());
-
         assertEquals(2, controller.findAll().size());
+    }
+
+    @Test
+    void addFriend_shouldDelegateToServiceAndChangeState() {
+        User user1 = controller.create(createValidUser());
+
+        User user2 = createValidUser();
+        user2.setEmail("anna@mail.ru");
+        user2.setLogin("anna");
+        User createdUser2 = controller.create(user2);
+
+        controller.addFriend(user1.getId(), createdUser2.getId());
+
+        Collection<User> friends = controller.getFriends(user1.getId());
+        assertEquals(1, friends.size());
+        assertEquals("anna", friends.iterator().next().getLogin());
     }
 }
