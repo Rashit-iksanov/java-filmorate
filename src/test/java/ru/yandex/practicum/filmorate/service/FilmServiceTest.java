@@ -5,8 +5,11 @@ import org.junit.jupiter.api.Test;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.film.InMemoryFilmStorage;
+import ru.yandex.practicum.filmorate.storage.user.InMemoryUserStorage;
+import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.time.LocalDate;
 import java.util.Collection;
@@ -17,11 +20,13 @@ class FilmServiceTest {
 
     private FilmService filmService;
     private FilmStorage filmStorage;
+    private UserStorage userStorage;
 
     @BeforeEach
     void setUp() {
         filmStorage = new InMemoryFilmStorage();
-        filmService = new FilmService(filmStorage);
+        userStorage = new InMemoryUserStorage();
+        filmService = new FilmService(filmStorage, userStorage);
     }
 
     private Film createValidFilm() {
@@ -31,6 +36,14 @@ class FilmServiceTest {
         film.setReleaseDate(LocalDate.of(1999, 3, 31));
         film.setDuration(136);
         return film;
+    }
+    private User createValidUser() {
+        User user = new User();
+        user.setEmail("test@mail.ru");
+        user.setLogin("testuser");
+        user.setName("Test User");
+        user.setBirthday(LocalDate.of(1990, 1, 1));
+        return user;
     }
 
     // Создание фильма
@@ -148,9 +161,12 @@ class FilmServiceTest {
     @Test
     void addLike_shouldAddUserIdToLikesSet() {
         Film film = filmService.create(createValidFilm());
-        filmService.addLike(film.getId(), 42);
 
-        assertTrue(film.getLikes().contains(42L));
+        User savedUser = userStorage.create(createValidUser());
+
+        filmService.addLike(film.getId(), savedUser.getId());
+
+        assertTrue(film.getLikes().contains((long) savedUser.getId()));
         assertEquals(1, film.getLikes().size());
     }
 
@@ -164,9 +180,13 @@ class FilmServiceTest {
         film2.setName("Непопулярный");
         filmService.update(film2);
 
-        filmService.addLike(film1.getId(), 1);
-        filmService.addLike(film1.getId(), 2);
-        filmService.addLike(film2.getId(), 3);
+        User user1 = userStorage.create(createValidUser());
+        User user2 = userStorage.create(createValidUser());
+        User user3 = userStorage.create(createValidUser());
+
+        filmService.addLike(film1.getId(), user1.getId());
+        filmService.addLike(film1.getId(), user2.getId()); // 2 лайка
+        filmService.addLike(film2.getId(), user3.getId()); // 1 лайк
 
         Collection<Film> popular = filmService.getPopular(1);
 

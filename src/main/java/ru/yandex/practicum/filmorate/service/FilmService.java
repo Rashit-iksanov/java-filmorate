@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
+import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.time.LocalDate;
 import java.util.Collection;
@@ -16,6 +17,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class FilmService {
     private final FilmStorage filmStorage;
+    private final UserStorage userStorage;
     private static final LocalDate EARLIEST_RELEASE_DATE = LocalDate.of(1895, 12, 28);
 
     public Film create(Film film) {
@@ -42,19 +44,26 @@ public class FilmService {
 
     public void addLike(int filmId, int userId) {
         log.info("Пользователь {} ставит лайк фильму {}", userId, filmId);
+
         Film film = filmStorage.findById(filmId);
 
-        boolean added = film.getLikes().add(Long.valueOf(userId));
-        log.debug("Лайк добавлен: {} (если false - лайк уже стоял). Текущее количество лайков: {}",
-                added, film.getLikes().size());
+        userStorage.findById(userId);
+
+        film.getLikes().add(Long.valueOf(userId));
         filmStorage.update(film);
+        log.info("Лайк успешно добавлен");
     }
 
     public void removeLike(int filmId, int userId) {
-        log.info("Удаление лайка пользователем {} у фильма {}", userId, filmId);
+        log.info("Пользователь {} удаляет лайк у фильма {}", userId, filmId);
+
         Film film = filmStorage.findById(filmId);
+
+        userStorage.findById(userId);
+
         film.getLikes().remove(Long.valueOf(userId));
         filmStorage.update(film);
+        log.info("Лайк успешно удален");
     }
 
     public Collection<Film> getPopular(int count) {
