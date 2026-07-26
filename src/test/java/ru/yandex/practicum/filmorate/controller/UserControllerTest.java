@@ -3,7 +3,6 @@ package ru.yandex.practicum.filmorate.controller;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.UserService;
 import ru.yandex.practicum.filmorate.storage.user.InMemoryUserStorage;
@@ -41,13 +40,6 @@ class UserControllerTest {
         User created = controller.create(user);
         assertNotEquals(0, created.getId());
         assertEquals("ivan@mail.ru", created.getEmail());
-    }
-
-    @Test
-    void create_invalidUser_shouldThrowException() {
-        User user = createValidUser();
-        user.setEmail("invalid-email");
-        assertThrows(ValidationException.class, () -> controller.create(user));
     }
 
     @Test

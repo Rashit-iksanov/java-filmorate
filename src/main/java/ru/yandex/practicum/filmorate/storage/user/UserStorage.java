@@ -12,4 +12,6 @@ public interface UserStorage {
     Collection<User> findAll();
 
     User findById(int id);
+
+    Collection<User> findByIds(Collection<Integer> ids);
 }

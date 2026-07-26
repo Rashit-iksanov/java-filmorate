@@ -8,6 +8,7 @@ import ru.yandex.practicum.filmorate.model.User;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -52,5 +53,14 @@ public class InMemoryUserStorage implements UserStorage {
             throw new NotFoundException("Пользователь с id=" + id + " не найден");
         }
         return user;
+    }
+
+    @Override
+    public Collection<User> findByIds(Collection<Integer> ids) {
+        log.debug("InMemoryUserStorage.findByIds: поиск {} пользователей по ID", ids.size());
+        return ids.stream()
+                .map(users::get)
+                .filter(user -> user != null)
+                .collect(Collectors.toList());
     }
 }

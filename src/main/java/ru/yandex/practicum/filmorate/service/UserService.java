@@ -87,9 +87,12 @@ public class UserService {
     public Collection<User> getFriends(int userId) {
         log.info("Получение списка друзей пользователя {}", userId);
         User user = userStorage.findById(userId);
-        return user.getFriends().stream()
-                .map(id -> userStorage.findById(id.intValue()))
+
+        Collection<Integer> friendIds = user.getFriends().stream()
+                .map(Long::intValue)
                 .collect(Collectors.toList());
+
+        return userStorage.findByIds(friendIds);
     }
 
     public Collection<User> getCommonFriends(int userId, int otherId) {
@@ -100,24 +103,22 @@ public class UserService {
         log.debug("Друзья user {}: {}", userId, user.getFriends());
         log.debug("Друзья other {}: {}", otherId, other.getFriends());
 
-        Collection<User> commonFriends = user.getFriends().stream()
+        Collection<Integer> commonFriendIds = user.getFriends().stream()
                 .filter(other.getFriends()::contains)
-                .map(id -> userStorage.findById(id.intValue()))
+                .map(Long::intValue)
                 .collect(Collectors.toList());
+
+        log.debug("Найдено {} общих ID друзей", commonFriendIds.size());
+
+        Collection<User> commonFriends = userStorage.findByIds(commonFriendIds);
 
         log.info("Найдено {} общих друзей", commonFriends.size());
         return commonFriends;
     }
 
     private void validateUser(User user) {
-        if (user.getEmail() == null || user.getEmail().isBlank() || !user.getEmail().contains("@")) {
-            throw new ValidationException("Электронная почта не может быть пустой и должна содержать символ @");
-        }
         if (user.getLogin() == null || user.getLogin().isBlank() || user.getLogin().contains(" ")) {
             throw new ValidationException("Логин не может быть пустым и содержать пробелы");
-        }
-        if (user.getBirthday() != null && user.getBirthday().isAfter(LocalDate.now())) {
-            throw new ValidationException("Дата рождения не может быть в будущем");
         }
     }
 }

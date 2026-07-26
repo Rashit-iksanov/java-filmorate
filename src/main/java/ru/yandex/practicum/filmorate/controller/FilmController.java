@@ -25,7 +25,7 @@ public class FilmController {
     }
 
     @GetMapping("/{id}")
-    public Film findById(@PathVariable int id) {
+    public Film findById(@PathVariable Integer id) {
         log.info("Получен запрос на получение фильма с id={}", id);
         return filmService.findById(id);
     }
@@ -47,21 +47,21 @@ public class FilmController {
     }
 
     @PutMapping("/{id}/like/{userId}")
-    public void addLike(@PathVariable int id, @PathVariable int userId) {
+    public void addLike(@PathVariable Integer id, @PathVariable Integer userId) {
         log.info("Получен запрос на добавление лайка: пользователь {} ставит лайк фильму {}", userId, id);
         filmService.addLike(id, userId);
         log.info("Лайк успешно добавлен");
     }
 
     @DeleteMapping("/{id}/like/{userId}")
-    public void removeLike(@PathVariable int id, @PathVariable int userId) {
+    public void removeLike(@PathVariable Integer id, @PathVariable Integer userId) {
         log.info("Получен запрос на удаление лайка: пользователь {} удаляет лайк у фильма {}", userId, id);
         filmService.removeLike(id, userId);
         log.info("Лайк успешно удален");
     }
 
     @GetMapping("/popular")
-    public Collection<Film> getPopular(@RequestParam(defaultValue = "10") int count) {
+    public Collection<Film> getPopular(@RequestParam(defaultValue = "10") Integer count) {
         log.info("Получен запрос на получение {} популярных фильмов", count);
         Collection<Film> popularFilms = filmService.getPopular(count);
         log.debug("Возвращено {} популярных фильмов", popularFilms.size());

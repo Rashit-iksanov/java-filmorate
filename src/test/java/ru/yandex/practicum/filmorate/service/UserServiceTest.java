@@ -44,21 +44,6 @@ class UserServiceTest {
     }
 
     @Test
-    void create_emptyEmail_shouldThrowException() {
-        User user = createValidUser();
-        user.setEmail("");
-        ValidationException ex = assertThrows(ValidationException.class, () -> userService.create(user));
-        assertTrue(ex.getMessage().contains("Электронная почта"));
-    }
-
-    @Test
-    void create_emailWithoutAt_shouldThrowException() {
-        User user = createValidUser();
-        user.setEmail("ivanmail.ru");
-        assertThrows(ValidationException.class, () -> userService.create(user));
-    }
-
-    @Test
     void create_emptyLogin_shouldThrowException() {
         User user = createValidUser();
         user.setLogin("");
@@ -71,13 +56,6 @@ class UserServiceTest {
         user.setLogin("ivan petrov");
         ValidationException ex = assertThrows(ValidationException.class, () -> userService.create(user));
         assertTrue(ex.getMessage().contains("пробелы"));
-    }
-
-    @Test
-    void create_birthdayTomorrow_shouldThrowException() {
-        User user = createValidUser();
-        user.setBirthday(LocalDate.now().plusDays(1));
-        assertThrows(ValidationException.class, () -> userService.create(user));
     }
 
     @Test
