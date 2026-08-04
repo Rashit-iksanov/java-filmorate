@@ -3,7 +3,7 @@ Template repository for Filmorate project.
 
 ## Схема базы данных
 
-![Схема базы данных Filmorate](schema.png)
+![Схема базы данных Filmorate](schema.jpg)
 
 ### Примеры SQL-запросов для основных операций
 
