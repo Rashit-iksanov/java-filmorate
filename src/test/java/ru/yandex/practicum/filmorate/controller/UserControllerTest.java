@@ -74,7 +74,7 @@ class UserControllerTest {
     }
 
     @Test
-    void addFriend_shouldDelegateToServiceAndChangeState() {
+    void friendWorkflow_addApproveAndGet_shouldReturnFriend() {
         User user1 = controller.create(createValidUser());
 
         User user2 = createValidUser();
@@ -82,7 +82,11 @@ class UserControllerTest {
         user2.setLogin("anna");
         User createdUser2 = controller.create(user2);
 
+        // 1. Добавляем в друзья (статус UNCONFIRMED)
         controller.addFriend(user1.getId(), createdUser2.getId());
+
+        // 2. Подтверждаем дружбу
+        controller.approveFriend(createdUser2.getId(), user1.getId());
 
         Collection<User> friends = controller.getFriends(user1.getId());
         assertEquals(1, friends.size());

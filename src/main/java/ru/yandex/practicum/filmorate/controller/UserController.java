@@ -75,4 +75,12 @@ public class UserController {
         log.debug("Найдено {} общих друзей", commonFriends.size());
         return commonFriends;
     }
+
+    @PutMapping("/{id}/friends/confirm/{friedId}")
+    public void approveFriend(@PathVariable Integer id, @PathVariable Integer friendId) {
+        log.info("Получен запрос на подтверждение дружбы: пользователь {} удаляет пользователя {}",
+                id, friendId);
+        userService.approveFriend(id, friendId);
+        log.info("Дружба успешно подтверждена");
+    }
 }

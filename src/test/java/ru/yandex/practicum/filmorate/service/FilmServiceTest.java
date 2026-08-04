@@ -5,6 +5,8 @@ import org.junit.jupiter.api.Test;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.Mpa;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.film.InMemoryFilmStorage;
@@ -13,6 +15,8 @@ import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.time.LocalDate;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -35,6 +39,18 @@ class FilmServiceTest {
         film.setDescription("Фантастический боевик");
         film.setReleaseDate(LocalDate.of(1999, 3, 31));
         film.setDuration(136);
+
+        Mpa mpa = new Mpa();
+        mpa.setId(5);
+        mpa.setName("NC-17");
+        film.setMpa(mpa);
+
+        Set<Genre> genres = new HashSet<>();
+        Genre genre = new Genre();
+        genre.setId(1);
+        genre.setName("Боевик");
+        genres.add(genre);
+        film.setGenres(genres);
         return film;
     }
 

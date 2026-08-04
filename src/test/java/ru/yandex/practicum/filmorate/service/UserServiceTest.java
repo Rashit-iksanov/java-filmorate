@@ -4,12 +4,15 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
+import ru.yandex.practicum.filmorate.model.FriendStatus;
+import ru.yandex.practicum.filmorate.model.Friendship;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.user.InMemoryUserStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.time.LocalDate;
 import java.util.Collection;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -102,7 +105,7 @@ class UserServiceTest {
     // Друзья
 
     @Test
-    void addFriend_validUsers_shouldAddToBothSets() {
+    void addFriend_validUsers_shouldAddUnconfirmedFriendships() {
         User user1 = userService.create(createValidUser());
 
         User user2 = createValidUser();
@@ -112,16 +115,22 @@ class UserServiceTest {
 
         userService.addFriend(user1.getId(), createdUser2.getId());
 
-        Collection<User> friendsOfUser1 = userService.getFriends(user1.getId());
-        Collection<User> friendsOfUser2 = userService.getFriends(createdUser2.getId());
+        User updatedUser1 = userStorage.findById(user1.getId());
+        User updatedUser2 = userStorage.findById(createdUser2.getId());
 
-        assertEquals(1, friendsOfUser1.size());
-        assertEquals(1, friendsOfUser2.size());
-        assertTrue(friendsOfUser1.stream().anyMatch(u -> u.getId() == createdUser2.getId()));
+        Optional<Friendship> friendship1 = updatedUser1.getFriendships().stream()
+                .filter(f -> f.getFriendId() == createdUser2.getId()).findFirst();
+        Optional<Friendship> friendship2 = updatedUser2.getFriendships().stream()
+                .filter(f -> f.getFriendId() == user1.getId()).findFirst();
+
+        assertTrue(friendship1.isPresent());
+        assertTrue(friendship2.isPresent());
+        assertEquals(FriendStatus.UNCONFIRMED, friendship1.get().getStatus());
+        assertEquals(FriendStatus.UNCONFIRMED, friendship2.get().getStatus());
     }
 
     @Test
-    void getCommonFriends_shouldReturnOnlyCommon() {
+    void getCommonFriends_shouldReturnOnlyCommonConfirmedFriends() {
         User user1 = userService.create(createValidUser()); // Иван
 
         User user2 = createValidUser();
@@ -137,15 +146,41 @@ class UserServiceTest {
         userService.addFriend(user1.getId(), anna.getId());
         userService.addFriend(user1.getId(), petr.getId());
 
+        userService.approveFriend(anna.getId(), user1.getId());
+        userService.approveFriend(petr.getId(), user1.getId());
+
         User user4 = createValidUser();
         user4.setEmail("olga@mail.ru");
         user4.setLogin("olga");
         User olga = userService.create(user4);
+
         userService.addFriend(olga.getId(), anna.getId());
+        userService.approveFriend(anna.getId(), olga.getId());
 
         Collection<User> common = userService.getCommonFriends(user1.getId(), olga.getId());
 
         assertEquals(1, common.size());
         assertEquals("anna", common.iterator().next().getLogin());
+    }
+
+    @Test
+    void getFriends_shouldReturnOnlyConfirmedFriends() {
+        User user1 = userService.create(createValidUser());
+        User user2 = createValidUser();
+        user2.setEmail("anna@mail.ru");
+        user2.setLogin("anna");
+        User createdUser2 = userService.create(user2);
+
+        userService.addFriend(user1.getId(), createdUser2.getId());
+
+        // Пока не подтверждено, друзей быть не должно
+        assertTrue(userService.getFriends(user1.getId()).isEmpty());
+
+        // Подтверждаем дружбу
+        userService.approveFriend(createdUser2.getId(), user1.getId());
+
+        Collection<User> friends = userService.getFriends(user1.getId());
+        assertEquals(1, friends.size());
+        assertEquals("anna", friends.iterator().next().getLogin());
     }
 }
