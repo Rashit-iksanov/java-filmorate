@@ -1,0 +1,149 @@
+$kind: http-request
+url: "{{baseUrl}}/users"
+method: POST
+headers:
+  Content-Type: application/json
+  Accept: "*/*"
+body:
+  type: json
+  content: |-
+    {
+      "login": "dolore",
+      "name": "Nick Name",
+      "email": "mail@mail.ru",
+      "birthday": "1946-08-20"
+    }
+scripts:
+  - type: afterResponse
+    code: "const source = JSON.parse(pm.request.body.raw)\r
+
+      \r
+
+      pm.test(\"Status code is 200 or 201\", function () {\r
+
+      \    pm.expect(pm.response.code).to.be.oneOf([200,201]);\r
+
+      });\r
+
+      pm.test(\"Has user create response\", function () {\r
+
+      \    pm.response.to.be.withBody;\r
+
+      \    pm.response.to.be.json;\r
+
+      });\r
+
+      pm.test(\"Test user 'id' field\", function () {\r
+
+      \    var jsonData = pm.response.json();\r
+
+      \    pm.expect(jsonData).to.have.property('id');\r
+
+      });\r
+
+      pm.test(\"Test user 'email' field\", function () {\r
+
+      \    var jsonData = pm.response.json();\r
+
+      \    pm.expect(jsonData).to.have.property('email');\r
+
+      \    pm.expect(jsonData.email, `\"email\" must be \"${source.mail}\"`).to.eql(source.email);\r
+
+      });\r
+
+      pm.test(\"Test user 'name' field\", function () {\r
+
+      \    var jsonData = pm.response.json();\r
+
+      \    pm.expect(jsonData).to.have.property('name');\r
+
+      \    pm.expect(jsonData.name, `\"name\" must be \"${source.name}\"`).to.eql(source.name);\r
+
+      });\r
+
+      pm.test(\"Test user 'login' field\", function () {\r
+
+      \    var jsonData = pm.response.json();\r
+
+      \    pm.expect(jsonData).to.have.property('login');\r
+
+      \    pm.expect(jsonData.login, `\"login\" field must be \"${source.login}\"`).to.eql(source.login);    \r
+
+      });\r
+
+      pm.test(\"Test user 'birthday' field\", function () {\r
+
+      \    var jsonData = pm.response.json();\r
+
+      \    pm.expect(jsonData).to.have.property('birthday');\r
+
+      \    pm.expect(jsonData.birthday, `\"birthday\" field must be \"${source.birthday}\"`).to.eql(source.birthday);\r
+
+      });"
+    language: text/javascript
+  - type: beforeRequest
+    code: "const main = async () => {\r
+
+      \    const api = new API(pm);\r
+
+      \    const rnd = new RandomUtils();\r
+
+      \r
+
+      \    let user;\r
+
+      \    try {\r
+
+      \        user = rnd.getUser();\r
+
+      \    } catch(err) {\r
+
+      \        console.error(\"Ошибка при подготовке тестовых данных.\", err);\r
+
+      \    }\r
+
+      \r
+
+      \    pm.request.body.update({\r
+
+      \        mode: 'raw',\r
+
+      \        raw: JSON.stringify(user),\r
+
+      \        options: { raw: { language: 'json' } }\r
+
+      \    });\r
+
+      };\r
+
+      \r
+
+      const interval = setInterval(() => {}, 1000);\r
+
+      \r
+
+      setTimeout(async () => \r
+
+      \    {\r
+
+      \        try {\r
+
+      \            await main();\r
+
+      \        } catch (e) {\r
+
+      \            console.error(e);\r
+
+      \        } finally {\r
+
+      \            clearInterval(interval);\r
+
+      \        }\r
+
+      \    },  \r
+
+      \    100 \r
+
+      );"
+    language: text/javascript
+order: 1000

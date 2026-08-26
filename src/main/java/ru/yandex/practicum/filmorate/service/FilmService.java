@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
@@ -16,8 +17,13 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class FilmService {
+
+    @Qualifier("filmDbStorage")
     private final FilmStorage filmStorage;
+
+    @Qualifier("userDbStorage")
     private final UserStorage userStorage;
+
     private static final LocalDate EARLIEST_RELEASE_DATE = LocalDate.of(1895, 12, 28);
 
     public Film create(Film film) {
@@ -49,7 +55,7 @@ public class FilmService {
 
         userStorage.findById(userId);
 
-        film.getLikes().add(Long.valueOf(userId));
+        film.getLikes().add(Integer.valueOf(userId));
         filmStorage.update(film);
         log.info("Лайк успешно добавлен");
     }
@@ -86,6 +92,9 @@ public class FilmService {
     }
 
     private void validateFilm(Film film) {
+        if (film.getMpa() == null || film.getMpa().getId() == null) {
+            throw new ValidationException("Рейтинг MPA должен быть указан");
+        }
         if (film.getName() == null || film.getName().isBlank()) {
             throw new ValidationException("Название не может быть пустым");
         }

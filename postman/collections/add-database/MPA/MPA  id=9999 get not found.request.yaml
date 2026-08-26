@@ -1,0 +1,19 @@
+$kind: http-request
+url: "{{baseUrl}}/mpa/:id"
+method: GET
+headers:
+  Accept: "*/*"
+pathVariables:
+  - key: id
+    value: "9999"
+    description: "(Required) "
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"Status code is 404\", function () {\r
+
+      \    pm.response.to.have.status(404);\r
+
+      });"
+    language: text/javascript
+examples: ./.resources/MPA  id=9999 get not found.resources/examples
+order: 2000

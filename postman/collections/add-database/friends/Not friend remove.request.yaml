@@ -1,0 +1,125 @@
+$kind: http-request
+url: "{{baseUrl}}/users/{{id}}/friends/{{friend_id}}"
+method: DELETE
+headers:
+  Content-Type: application/json
+  Accept: "*/*"
+body:
+  type: json
+  content: ""
+scripts:
+  - type: afterResponse
+    code: "const user1_id = pm.collectionVariables.get(\"id\");\r
+
+      const user2_id = pm.collectionVariables.get(\"friend_id\");\r
+
+      \r
+
+      pm.test(\"Status code is 200\", function () {\r
+
+      \    pm.expect(pm.response.code).to.be.oneOf([200,204]);\r
+
+      });\r
+
+      \r
+
+      pm.sendRequest({\r
+
+      \    url : \"http://localhost:8080/users/\" + user1_id + '/friends',\r
+
+      \    method : \"GET\",\r
+
+      \    header: { \"Content-Type\": \"application/json\" }\r
+
+      }, (error, response) => {\r
+
+      \    pm.test(\"user1 should have 0 friends\", function () {\r
+
+      \        pm.expect(response.json().length).to.be.equal(0);\r
+
+      \    });\r
+
+      });\r
+
+      \r
+
+      pm.sendRequest({\r
+
+      \    url : \"http://localhost:8080/users/\" + user2_id + '/friends',\r
+
+      \    method : \"GET\",\r
+
+      \    header: { \"Content-Type\": \"application/json\" }\r
+
+      }, (error, response) => {\r
+
+      \    pm.test(\"user2 should have 0 friends\", function () {\r
+
+      \        pm.expect(response.json().length).to.be.equal(0);\r
+
+      \    });\r
+
+      });\r\n"
+    language: text/javascript
+  - type: beforeRequest
+    code: "const main = async () => {\r
+
+      \    const api = new API(pm);\r
+
+      \    const rnd = new RandomUtils();\r
+
+      \r
+
+      \    let user1, user2;\r
+
+      \    try {\r
+
+      \        user1 = await api.addUser(rnd.getUser());\r
+
+      \        user2 = await api.addUser(rnd.getUser());\r
+
+      \        pm.collectionVariables.set(\"id\", user1.id);\r
+
+      \        pm.collectionVariables.set(\"friend_id\", user2.id);\r
+
+      \    } catch(err) {\r
+
+      \        console.error(\"Ошибка при подготовке тестовых данных.\", err);\r
+
+      \    }\r
+
+      \r
+
+      };\r
+
+      \r
+
+      const interval = setInterval(() => {}, 1000);\r
+
+      \r
+
+      setTimeout(async () => \r
+
+      \    {\r
+
+      \        try {\r
+
+      \            await main();\r
+
+      \        } catch (e) {\r
+
+      \            console.error(e);\r
+
+      \        } finally {\r
+
+      \            clearInterval(interval);\r
+
+      \        }\r
+
+      \    },  \r
+
+      \    100 \r
+
+      );"
+    language: text/javascript
+order: 6000

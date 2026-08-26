@@ -1,0 +1,145 @@
+$kind: collection
+name: add-database
+description: ""
+variables:
+  baseUrl: http://localhost:8080
+  id: ""
+  friend_id: ""
+  user_friends: ""
+  user3_id: ""
+  film: ""
+  film1_id: ""
+  film2_id: ""
+  film3_id: ""
+  source: ""
+  user: ""
+  film_id: ""
+  new_user_info: ""
+scripts:
+  - type: http:beforeRequest
+    code: |-
+      API = class {
+          constructor(postman, verbose = false, baseUrl = "http://localhost:8080") {
+              this.baseUrl = baseUrl;
+              this.pm = postman;
+              this._verbose = verbose;
+          }
+
+          async addUser(user, verbose=null) {
+              return this.post("/users", user, "Ошибка при добавлении нового пользователя: ", verbose);
+          }
+
+          async addFilm(film, verbose=null) {
+              return this.post("/films", film, "Ошибка при добавлении нового фильма: ", verbose);
+          }
+
+          async addFriend(userId, friendId, verbose=null) {
+              return this.put("/users/" + userId + '/friends/' + friendId, null, "Ошибка при добавлении нового фильма: ", verbose);
+          }
+
+          async addLike(filmId, userId, verbose=null) {
+              return this.put("/films/" + filmId + '/like/' + userId, null, "Ошибка при добавлении лайка на фильм: ", verbose);
+          }
+
+          async getFriends(userId, verbose=null) {
+              return this.get('/users/' + userId + '/friends', null, "Ошибка при поиске друзей по id пользователя", verbose);
+          }
+
+          async post(path, body, errorText = "Ошибка при выполнении post-запроса: ", verbose=null) {
+              return this.sendRequest("POST", path, body, errorText, verbose);
+          }
+
+          async patch(path, body = null, errorText = "Ошибка при выполнении patch-запроса: ", verbose=null) {
+              return this.sendRequest("PATCH", path, body, errorText, verbose);
+          }
+
+          async get(path, body = null, errorText = "Ошибка при выполнении get-запроса: ", verbose=null) {
+              return this.sendRequest("GET", path, body, errorText, verbose);
+          }
+
+          async put(path, body = null, errorText = "Ошибка при выполнении put-запроса: ", verbose=null) {
+              return this.sendRequest("PUT", path, body, errorText, verbose);
+          }
+
+          async sendRequest(method, path, body=null, errorText = "Ошибка при выполнении запроса: ", verbose=null) {
+              return new Promise((resolve, reject) => {
+                  verbose = verbose == null ? this._verbose : verbose;
+                  const request = {
+                      url: this.baseUrl + path,
+                      method: method,
+                      body: body == null ? "" : JSON.stringify(body),
+                      header: { "Content-Type": "application/json" },
+                  };
+                  if(verbose) {
+                      console.log("Отправляю запрос: ", request);
+                  }
+
+                  try {
+                      this.pm.sendRequest(request, (error, response) => {
+                          if(error || (response.code >= 400 && response.code <= 599)) {
+                              let err = error ? error : JSON.stringify(response.json());
+                              console.error("При выполнении запроса к серверу возникла ошика.\n", err,
+                                   "\nДля отладки проблемы повторите такой же запрос к вашей программе " + 
+                                   "на локальном компьютере. Данные запроса:\n", JSON.stringify(request));
+
+                              reject(new Error(errorText + err));
+                          }
+                          if(verbose) {
+                              console.log("Результат обработки запроса: код состояния - ", response.code, ", тело: ", response.json());
+                          }
+                          if (response.stream.length === 0){
+                              resolve(null);
+                          }else{
+                              resolve(response.json());
+                          }
+                      });
+                      
+                  } catch(err) {
+                      if(verbose) {
+                          console.error(errorText, err);
+                      }
+                      return Promise.reject(err);
+                  }
+              });
+          }
+      };
+
+      RandomUtils = class {
+          constructor() {}
+
+          getUser() {
+              let date = new Date(new Date(1960, 0, 1).getTime() + Math.random() * (new Date(2010, 0, 1).getTime() - new Date(1960, 0, 1).getTime()));
+              return {
+                  name: pm.variables.replaceIn('{{$randomFullName}}'),
+                  login: this.getWord(10),
+                  email: pm.variables.replaceIn('{{$randomEmail}}'),
+                  birthday: date.toISOString().slice(0,10)
+              };
+          }
+
+          getFilm() {
+              let date = new Date(new Date(1960, 0, 1).getTime() + Math.random() * (new Date(2010, 0, 1).getTime() - new Date(1960, 0, 1).getTime()));
+              return {
+                  name: this.getWord(15),
+                  description: this.getWord(50),
+                  releaseDate: date.toISOString().slice(0,10),
+                  duration: Math.floor(Math.random() * (180 - 60 + 1) + 60),
+                  mpa: { id: Math.floor(Math.random() * (5 - 1 + 1) + 1)},
+                  genres: [{ id: Math.floor(Math.random() * (6 - 1 + 1) + 1)}]
+              };
+          }
+
+          getWord(length = 1) {
+              let result = '';
+              const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+              const charactersLength = characters.length;
+              let counter = 0;
+              while (counter < length) {
+                  result += characters.charAt(Math.floor(Math.random() * charactersLength));
+                  counter += 1;
+              }
+              return result;
+          }
+
+      }
+    language: text/javascript

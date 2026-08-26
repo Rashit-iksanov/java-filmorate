@@ -1,0 +1,32 @@
+$kind: http-request
+url: "{{baseUrl}}/users"
+method: POST
+headers:
+  Content-Type: application/json
+  Accept: "*/*"
+body:
+  type: json
+  content: |-
+    {
+      "login": "dolore",
+      "name": "",
+      "email": "test@mail.ru",
+      "birthday": "2446-08-20"
+    }
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"Status code is 400\", function () {\r
+
+      \     pm.expect(pm.response.code).to.be.equal(400);\r
+
+      });\r
+
+      pm.test(\"Has error response\", function () {\r
+
+      \    pm.response.to.be.withBody;\r
+
+      \    pm.response.to.be.json;\r
+
+      });"
+    language: text/javascript
+order: 4000

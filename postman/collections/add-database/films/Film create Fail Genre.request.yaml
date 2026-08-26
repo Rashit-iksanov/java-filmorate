@@ -1,0 +1,36 @@
+$kind: http-request
+url: "{{baseUrl}}/films"
+method: POST
+headers:
+  Content-Type: application/json
+  Accept: "*/*"
+body:
+  type: json
+  content: |-
+    {
+      "name": "Name",
+      "description": "Descrition",
+      "releaseDate": "1980-03-25",
+      "duration": 200,
+      "mpa": { "id": 5},
+      "genres": [
+        {"id": 500}
+        ]
+    }
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"Status code is 404\", function () {\r
+
+      \     pm.expect(pm.response.code).to.be.equal(404);\r
+
+      });\r
+
+      pm.test(\"Has error response\", function () {\r
+
+      \    pm.response.to.be.withBody;\r
+
+      \    pm.response.to.be.json;\r
+
+      });\r\n"
+    language: text/javascript
+order: 8000

@@ -1,0 +1,111 @@
+$kind: http-request
+url: "{{baseUrl}}/films"
+method: PUT
+headers:
+  Content-Type: application/json
+  Accept: "*/*"
+body:
+  type: json
+  content: ""
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"Status code is 500\", function () {\r
+
+      \    pm.expect(pm.response.code).to.be.oneOf([500, 404]);\r
+
+      });\r
+
+      pm.test(\"Has error response\", function () {\r
+
+      \    pm.response.to.be.withBody;\r
+
+      \    pm.response.to.be.json;\r
+
+      });\r\n"
+    language: text/javascript
+  - type: beforeRequest
+    code: "const main = async () => {\r
+
+      \    const api = new API(pm);\r
+
+      \    const rnd = new RandomUtils();\r
+
+      \r
+
+      \    let user;\r
+
+      \    try {\r
+
+      \        film = await api.addFilm(rnd.getFilm());\r
+
+      \        pm.collectionVariables.set(\"film\", film);\r
+
+      \    } catch(err) {\r
+
+      \        console.error(\"Ошибка при подготовке тестовых данных.\", err);\r
+
+      \    }\r
+
+      \r
+
+      \    pm.request.body.update({\r
+
+      \        mode: 'raw',\r
+
+      \        raw: JSON.stringify({\r
+
+      \            \"id\": film.id+1,\r
+
+      \            \"name\": \"Film Updated\",\r
+
+      \            \"releaseDate\": \"1989-04-17\",\r
+
+      \            \"description\": \"New film update decription\",\r
+
+      \            \"duration\": 190,\r
+
+      \            \"rate\": 4,\r
+
+      \            \"mpa\": { \"id\": 3}\r
+
+      \            }),\r
+
+      \        options: { raw: { language: 'json' } }\r
+
+      \    });\r
+
+      \r
+
+      };\r
+
+      \r
+
+      const interval = setInterval(() => {}, 1000);\r
+
+      \r
+
+      setTimeout(async () => \r
+
+      \    {\r
+
+      \        try {\r
+
+      \            await main();\r
+
+      \        } catch (e) {\r
+
+      \            console.error(e);\r
+
+      \        } finally {\r
+
+      \            clearInterval(interval);\r
+
+      \        }\r
+
+      \    },  \r
+
+      \    100 \r
+
+      );"
+    language: text/javascript
+order: 10000

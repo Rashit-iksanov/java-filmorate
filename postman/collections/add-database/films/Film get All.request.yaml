@@ -1,0 +1,32 @@
+$kind: http-request
+url: "{{baseUrl}}/films"
+method: GET
+headers:
+  Accept: "*/*"
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"Status code is 200\", function () {\r
+
+      \    pm.response.to.be.ok;\r
+
+      });\r
+
+      pm.test(\"Test list film response\", function () {\r
+
+      \    pm.response.to.be.withBody;\r
+
+      \    pm.response.to.be.json;\r
+
+      });\r
+
+      pm.test(\"Test film[0] 'id' field\", function () {\r
+
+      \    var jsonData = pm.response.json();\r
+
+      \    pm.expect(jsonData[0]).to.have.property('id');\r
+
+      \    pm.expect(jsonData[0].id, '\"id\" must be 1').to.eql(1);\r
+
+      });\r\n"
+    language: text/javascript
+order: 11000

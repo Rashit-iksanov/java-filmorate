@@ -1,0 +1,104 @@
+$kind: http-request
+url: "{{baseUrl}}/users/{{id}}/friends/common/{{friend_id}}"
+method: GET
+headers:
+  Content-Type: application/json
+  Accept: "*/*"
+body:
+  type: json
+  content: ""
+scripts:
+  - type: afterResponse
+    code: "const user3_id = pm.collectionVariables.get(\"user3_id\");\r
+
+      \r
+
+      pm.test(\"Status code is 200\", function () {\r
+
+      \    pm.expect(pm.response.code).to.be.oneOf([200,204]);\r
+
+      });\r
+
+      \r
+
+      pm.test(\"user1 should have 1 common friend with user2\", function () {\r
+
+      \    pm.expect(pm.response.json().length).to.be.equal(1);\r
+
+      \    pm.expect(pm.response.json()[0].id).to.be.equal(user3_id);\r
+
+      });\r\n"
+    language: text/javascript
+  - type: beforeRequest
+    code: "const main = async () => {\r
+
+      \    const api = new API(pm);\r
+
+      \    const rnd = new RandomUtils();\r
+
+      \r
+
+      \    let user1, user2, user3;\r
+
+      \    try {\r
+
+      \        user1 = await api.addUser(rnd.getUser());\r
+
+      \        user2 = await api.addUser(rnd.getUser());\r
+
+      \        user3 = await api.addUser(rnd.getUser());\r
+
+      \        await api.addFriend(user1.id, user3.id);\r
+
+      \        await api.addFriend(user1.id, user2.id);\r
+
+      \        await api.addFriend(user2.id, user3.id);\r
+
+      \        pm.collectionVariables.set(\"id\", user1.id);\r
+
+      \        pm.collectionVariables.set(\"friend_id\", user2.id);\r
+
+      \        pm.collectionVariables.set(\"user3_id\", user3.id);\r
+
+      \    } catch(err) {\r
+
+      \        console.error(\"Ошибка при подготовке тестовых данных.\", err);\r
+
+      \    }\r
+
+      \r
+
+      };\r
+
+      \r
+
+      const interval = setInterval(() => {}, 1000);\r
+
+      \r
+
+      setTimeout(async () => \r
+
+      \    {\r
+
+      \        try {\r
+
+      \            await main();\r
+
+      \        } catch (e) {\r
+
+      \            console.error(e);\r
+
+      \        } finally {\r
+
+      \            clearInterval(interval);\r
+
+      \        }\r
+
+      \    },  \r
+
+      \    100 \r
+
+      );"
+    language: text/javascript
+settings: {}
+order: 10000

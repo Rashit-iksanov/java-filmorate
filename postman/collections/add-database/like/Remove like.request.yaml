@@ -1,0 +1,81 @@
+$kind: http-request
+url: "{{baseUrl}}/films/{{film_id}}/like/{{id}}"
+method: DELETE
+headers:
+  Content-Type: application/json
+  Accept: "*/*"
+body:
+  type: json
+  content: ""
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"Status code is 200\", function () {\r
+
+      \    pm.expect(pm.response.code).to.be.oneOf([200,204]);\r
+
+      });\r\n"
+    language: text/javascript
+  - type: beforeRequest
+    code: "const main = async () => {\r
+
+      \    const api = new API(pm);\r
+
+      \    const rnd = new RandomUtils();\r
+
+      \r
+
+      \    let user, film;\r
+
+      \    try {\r
+
+      \        user = await api.addUser(rnd.getUser());\r
+
+      \        film = await api.addFilm(rnd.getFilm());\r
+
+      \        await api.addLike(film.id, user.id);\r
+
+      \        pm.collectionVariables.set(\"id\", user.id);\r
+
+      \        pm.collectionVariables.set(\"film_id\", film.id);\r
+
+      \    } catch(err) {\r
+
+      \        console.error(\"Ошибка при подготовке тестовых данных.\", err);\r
+
+      \    }\r
+
+      \r
+
+      };\r
+
+      \r
+
+      const interval = setInterval(() => {}, 1000);\r
+
+      \r
+
+      setTimeout(async () => \r
+
+      \    {\r
+
+      \        try {\r
+
+      \            await main();\r
+
+      \        } catch (e) {\r
+
+      \            console.error(e);\r
+
+      \        } finally {\r
+
+      \            clearInterval(interval);\r
+
+      \        }\r
+
+      \    },  \r
+
+      \    100 \r
+
+      );"
+    language: text/javascript
+order: 2000

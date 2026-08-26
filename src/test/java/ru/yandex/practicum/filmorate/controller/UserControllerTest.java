@@ -9,7 +9,6 @@ import ru.yandex.practicum.filmorate.storage.user.InMemoryUserStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.time.LocalDate;
-import java.util.Collection;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -71,25 +70,5 @@ class UserControllerTest {
         controller.create(createValidUser());
         controller.create(createValidUser());
         assertEquals(2, controller.findAll().size());
-    }
-
-    @Test
-    void friendWorkflow_addApproveAndGet_shouldReturnFriend() {
-        User user1 = controller.create(createValidUser());
-
-        User user2 = createValidUser();
-        user2.setEmail("anna@mail.ru");
-        user2.setLogin("anna");
-        User createdUser2 = controller.create(user2);
-
-        // 1. Добавляем в друзья (статус UNCONFIRMED)
-        controller.addFriend(user1.getId(), createdUser2.getId());
-
-        // 2. Подтверждаем дружбу
-        controller.approveFriend(createdUser2.getId(), user1.getId());
-
-        Collection<User> friends = controller.getFriends(user1.getId());
-        assertEquals(1, friends.size());
-        assertEquals("anna", friends.iterator().next().getLogin());
     }
 }

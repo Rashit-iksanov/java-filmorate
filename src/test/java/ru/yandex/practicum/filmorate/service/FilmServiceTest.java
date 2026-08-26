@@ -170,19 +170,6 @@ class FilmServiceTest {
         assertEquals(2, filmService.findAll().size());
     }
 
-    // Лайки и Популярное
-    @Test
-    void addLike_shouldAddUserIdToLikesSet() {
-        Film film = filmService.create(createValidFilm());
-
-        User savedUser = userStorage.create(createValidUser());
-
-        filmService.addLike(film.getId(), savedUser.getId());
-
-        assertTrue(film.getLikes().contains((long) savedUser.getId()));
-        assertEquals(1, film.getLikes().size());
-    }
-
     @Test
     void getPopular_shouldReturnSortedFilmsByLikes() {
         Film film1 = filmService.create(createValidFilm());

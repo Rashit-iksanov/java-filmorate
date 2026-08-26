@@ -1,0 +1,117 @@
+$kind: http-request
+url: "{{baseUrl}}/genres"
+method: GET
+headers:
+  Accept: "*/*"
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"Status code is 200\", function () {\r
+
+      \    pm.response.to.be.ok;\r
+
+      });\r
+
+      \r
+
+      pm.test(\"Response is JSON array of 6 items\", function () {\r
+
+      \    pm.response.to.be.withBody;\r
+
+      \    pm.response.to.be.json;\r
+
+      \r
+
+      \    const json = pm.response.json();\r
+
+      \    pm.expect(Array.isArray(json), \"Body must be an array\").to.be.true;\r
+
+      \    pm.expect(json.length, \"List length must be 6\").to.eql(6);\r
+
+      \r
+
+      \    json.forEach((item, idx) => {\r
+
+      \        pm.expect(item, `Item[${idx}] must be an object`).to.be.an(\"object\");\r
+
+      \        pm.expect(item).to.have.property(\"id\");\r
+
+      \        pm.expect(item).to.have.property(\"name\");\r
+
+      \        pm.expect(item.id, `Item[${idx}].id must be a number`).to.be.a(\"number\");\r
+
+      \        pm.expect(item.name, `Item[${idx}].name must be a string`).to.be.a(\"string\");\r
+
+      \    });\r
+
+      \r
+
+      \    // Нет дубликатов id\r
+
+      \    const ids = json.map(o => o.id);\r
+
+      \    pm.expect(new Set(ids).size, \"IDs must be unique\").to.eql(ids.length);\r
+
+      });\r
+
+      \r
+
+      pm.test(\"Set of id→name matches expected genres (order-agnostic)\", function () {\r
+
+      \    const EXPECTED = {\r
+
+      \        1: \"Комедия\",\r
+
+      \        2: \"Драма\",\r
+
+      \        3: \"Мультфильм\",\r
+
+      \        4: \"Триллер\",\r
+
+      \        5: \"Документальный\",\r
+
+      \        6: \"Боевик\"\r
+
+      \    };\r
+
+      \r
+
+      \    const json = pm.response.json();\r
+
+      \    const received = Object.fromEntries(json.map(o => [o.id, o.name]));\r
+
+      \r
+
+      \    const equals = (a, b) => {\r
+
+      \        const ka = Object.keys(a).sort();\r
+
+      \        const kb = Object.keys(b).sort();\r
+
+      \        if (ka.length !== kb.length) return false;\r
+
+      \        for (let i = 0; i < ka.length; i++) {\r
+
+      \            if (ka[i] !== kb[i]) return false;\r
+
+      \            const k = ka[i];\r
+
+      \            if (a[k] !== b[k]) return false;\r
+
+      \        }\r
+
+      \        return true;\r
+
+      \    };\r
+
+      \r
+
+      \    pm.expect(equals(received, EXPECTED),\r
+
+      \        \"Result must exactly match the expected id→name set\").to.be.true;\r
+
+      });\r
+
+      \r\n"
+    language: text/javascript
+examples: ./.resources/Genre get All.resources/examples
+order: 3000

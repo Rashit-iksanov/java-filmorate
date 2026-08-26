@@ -6,7 +6,6 @@ import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Mpa;
-import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.FilmService;
 import ru.yandex.practicum.filmorate.service.UserService;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
@@ -93,24 +92,5 @@ class FilmControllerTest {
 
         Collection<Film> films = filmController.findAll();
         assertEquals(2, films.size());
-    }
-
-    @Test
-    void addLike_shouldDelegateToServiceAndChangeState() {
-        Film film = filmController.create(createValidFilm());
-
-        User user = new User();
-        user.setEmail("test@mail.ru");
-        user.setLogin("testuser");
-        user.setName("Test User");
-        user.setBirthday(LocalDate.of(1990, 1, 1));
-        User createdUser = userController.create(user);
-
-        int userId = createdUser.getId();
-
-        filmController.addLike(film.getId(), userId);
-
-        Film updatedFilm = filmController.findById(film.getId());
-        assertTrue(updatedFilm.getLikes().contains((long) userId));
     }
 }

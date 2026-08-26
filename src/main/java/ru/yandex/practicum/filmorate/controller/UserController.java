@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.UserService;
 
-import java.util.*;
+import java.util.Collection;
 
 @Slf4j
 @RestController
@@ -76,9 +76,9 @@ public class UserController {
         return commonFriends;
     }
 
-    @PutMapping("/{id}/friends/confirm/{friedId}")
+    @PutMapping("/{id}/friends/confirm/{friendId}")
     public void approveFriend(@PathVariable Integer id, @PathVariable Integer friendId) {
-        log.info("Получен запрос на подтверждение дружбы: пользователь {} удаляет пользователя {}",
+        log.info("Получен запрос на подтверждение дружбы: пользователь {} добавляет пользователя {}",
                 id, friendId);
         userService.approveFriend(id, friendId);
         log.info("Дружба успешно подтверждена");

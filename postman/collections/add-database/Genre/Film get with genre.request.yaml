@@ -1,0 +1,236 @@
+$kind: http-request
+url: "{{baseUrl}}/films/:id"
+method: GET
+headers:
+  Accept: "*/*"
+pathVariables:
+  - key: id
+    value: "{{id}}"
+    description: "(Required) "
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"Status code is 200\", function () {\r
+
+      \    pm.response.to.be.ok;\r
+
+      });\r
+
+      \r
+
+      pm.test(\"Get film response is valid JSON\", function () {\r
+
+      \    pm.response.to.be.withBody;\r
+
+      \    pm.response.to.be.json;\r
+
+      });\r
+
+      \r
+
+      const json = pm.response.json();\r
+
+      const filmId = pm.collectionVariables.get(\"id\");\r
+
+      \r
+
+      pm.test(\"Film has correct 'id'\", function () {\r
+
+      \    pm.expect(json).to.have.property(\"id\");\r
+
+      \    pm.expect(json.id, `\"id\" must be ${filmId}`).to.eql(filmId);\r
+
+      });\r
+
+      \r
+
+      pm.test(\"Film basic fields are correct\", function () {\r
+
+      \    pm.expect(json).to.have.property(\"name\");\r
+
+      \    pm.expect(json.name, `\"name\" must be 'Film Updated'`).to.eql(\"Film Updated\");\r
+
+      \r
+
+      \    pm.expect(json).to.have.property(\"description\");\r
+
+      \    pm.expect(json.description, `\"description\" must be 'New film update decription'`).to.eql(\"New film update decription\");\r
+
+      \r
+
+      \    pm.expect(json).to.have.property(\"releaseDate\");\r
+
+      \    pm.expect(json.releaseDate, `\"releaseDate\" must be '1989-04-17'`).to.eql(\"1989-04-17\");\r
+
+      \r
+
+      \    pm.expect(json).to.have.property(\"duration\");\r
+
+      \    pm.expect(json.duration, `\"duration\" must be 190`).to.eql(190);\r
+
+      });\r
+
+      \r
+
+      // --- проверка MPA (US или RU система) ---\r
+
+      \r
+
+      pm.test(\"Film has valid MPA rating (US or RU system)\", function () {\r
+
+      \    pm.expect(json).to.have.property(\"mpa\");\r
+
+      \    pm.expect(json.mpa).to.have.property(\"id\");\r
+
+      \    pm.expect(json.mpa.id, `\"mpa.id\" must be 5`).to.eql(5);\r
+
+      \r
+
+      \    pm.expect(json.mpa).to.have.property(\"name\");\r
+
+      \r
+
+      \    const MPA_US = {\r
+
+      \        1: \"G\",\r
+
+      \        2: \"PG\",\r
+
+      \        3: \"PG-13\",\r
+
+      \        4: \"R\",\r
+
+      \        5: \"NC-17\"\r
+
+      \    };\r
+
+      \    const MPA_RU = {\r
+
+      \        1: \"0+\",\r
+
+      \        2: \"6+\",\r
+
+      \        3: \"12+\",\r
+
+      \        4: \"16+\",\r
+
+      \        5: \"18+\"\r
+
+      \    };\r
+
+      \r
+
+      \    const id = json.mpa.id;\r
+
+      \    const name = json.mpa.name;\r
+
+      \r
+
+      \    const ok =\r
+
+      \        (MPA_US[id] && name === MPA_US[id]) ||\r
+
+      \        (MPA_RU[id] && name === MPA_RU[id]);\r
+
+      \r
+
+      \    pm.expect(ok, `\"mpa.name\" must match US or RU system`).to.be.true;\r
+
+      });\r
+
+      \r
+
+      // --- проверка жанров ---\r
+
+      \r
+
+      pm.test(\"Film has correct genres\", function () {\r
+
+      \    pm.expect(json).to.have.property(\"genres\");\r
+
+      \    pm.expect(Array.isArray(json.genres), \"'genres' must be an array\").to.be.true;\r
+
+      \    pm.expect(json.genres.length, \"'genres' must contain at least one item\").to.be.above(0);\r
+
+      \r
+
+      \    // проверяем, что есть жанр { id: 2, name: \"Драма\" }\r
+
+      \    const hasDrama = json.genres.some(g => g.id === 2 && g.name === \"Драма\");\r
+
+      \    pm.expect(hasDrama, \"Film must contain genre with id=2 and name='Драма'\").to.be.true;\r
+
+      });"
+    language: text/javascript
+  - type: beforeRequest
+    code: "const main = async () => {\r
+
+      \    const api = new API(pm);\r
+
+      \    const rnd = new RandomUtils();\r
+
+      \r
+
+      \    try {\r
+
+      \        film = await api.addFilm({\r
+
+      \            \"name\": \"Film Updated\",\r
+
+      \            \"releaseDate\": \"1989-04-17\",\r
+
+      \            \"description\": \"New film update decription\",\r
+
+      \            \"duration\": 190,\r
+
+      \            \"rate\": 4,\r
+
+      \            \"mpa\": { \"id\": 5},\r
+
+      \            \"genres\": [{ \"id\": 2}]\r
+
+      \        });\r
+
+      \        pm.collectionVariables.set(\"id\", film.id);\r
+
+      \    } catch(err) {\r
+
+      \        console.error(\"Ошибка при подготовке тестовых данных.\", err);\r
+
+      \    }\r
+
+      \r
+
+      };\r
+
+      \r
+
+      const interval = setInterval(() => {}, 1000);\r
+
+      \r
+
+      setTimeout(async () => \r
+
+      \    {\r
+
+      \        try {\r
+
+      \            await main();\r
+
+      \        } catch (e) {\r
+
+      \            console.error(e);\r
+
+      \        } finally {\r
+
+      \            clearInterval(interval);\r
+
+      \        }\r
+
+      \    },  \r
+
+      \    100 \r
+
+      );"
+    language: text/javascript
+examples: ./.resources/Film get with genre.resources/examples
+order: 4000

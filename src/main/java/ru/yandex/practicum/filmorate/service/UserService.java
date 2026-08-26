@@ -2,20 +2,19 @@ package ru.yandex.practicum.filmorate.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
-import ru.yandex.practicum.filmorate.model.FriendStatus;
-import ru.yandex.practicum.filmorate.model.Friendship;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.util.Collection;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserService {
+    @Qualifier("userDbStorage")
     private final UserStorage userStorage;
 
     public User create(User user) {
@@ -25,7 +24,9 @@ public class UserService {
             user.setName(user.getLogin());
             log.info("Имя не указано, используется логин: '{}'", user.getLogin());
         }
-        return userStorage.create(user);
+        User createdUser = userStorage.create(user);
+        log.info("Пользователь успешно создан с id={}", createdUser.getId());
+        return createdUser;
     }
 
     public User update(User user) {
@@ -34,7 +35,9 @@ public class UserService {
         if (user.getName() == null || user.getName().isBlank()) {
             user.setName(user.getLogin());
         }
-        return userStorage.update(user);
+        User updatedUser = userStorage.update(user);
+        log.info("Пользователь с id={} успешно обновлён", updatedUser.getId());
+        return updatedUser;
     }
 
     public Collection<User> findAll() {
@@ -54,110 +57,53 @@ public class UserService {
             throw new ValidationException("Нельзя добавить самого себя в друзья");
         }
 
-        User user = userStorage.findById(userId);
-        User friend = userStorage.findById(friendId);
-
-        // Создаем запись для пользователя (он отправил запрос)
-        Friendship userToFriend = new Friendship();
-        userToFriend.setUserId(userId);
-        userToFriend.setFriendId(friendId);
-        userToFriend.setStatus(FriendStatus.UNCONFIRMED);
-
-        // Создаем запись для друга (к нему пришел запрос)
-        Friendship friendToUser = new Friendship();
-        friendToUser.setUserId(friendId);
-        friendToUser.setFriendId(userId);
-        friendToUser.setStatus(FriendStatus.UNCONFIRMED);
-
-        // Добавляем в множества
-        user.getFriendships().add(userToFriend);
-        friend.getFriendships().add(friendToUser);
-
-        userStorage.update(user);
-        userStorage.update(friend);
-
-        log.info("Запрос в друзья отправлен");
+        userStorage.findById(userId);
+        userStorage.findById(friendId);
+        userStorage.addFriend(userId, friendId); // Односторонняя запись!
     }
 
     public void approveFriend(int userId, int friendId) {
         log.info("Подтверждение дружбы: user {} подтверждает friend {}", userId, friendId);
-        User user = userStorage.findById(userId);
-        User friend = userStorage.findById(friendId);
-
-        // 1. Находим запись у пользователя, который подтверждает, и меняем статус
-        user.getFriendships().stream()
-                .filter(f -> f.getFriendId() == friendId)
-                .findFirst()
-                .ifPresent(f -> f.setStatus(FriendStatus.CONFIRMED));
-
-        // 2. ВАЖНО: Находим запись у друга и ТОЖЕ меняем статус на подтвержденный (взаимная дружба)
-        friend.getFriendships().stream()
-                .filter(f -> f.getFriendId() == userId)
-                .findFirst()
-                .ifPresent(f -> f.setStatus(FriendStatus.CONFIRMED));
-
-        userStorage.update(user);
-        userStorage.update(friend);
-        log.info("Дружба успешно подтверждена с обеих сторон");
+        userStorage.findById(userId);
+        userStorage.findById(friendId);
+        userStorage.approveFriend(userId, friendId);
     }
 
     public void removeFriend(int userId, int friendId) {
-        log.info("Начало операции удаления из друзей: user {} -> friend {}", userId, friendId);
-        User user = userStorage.findById(userId);
-        User friend = userStorage.findById(friendId);
+        log.info("Запрос на удаление из друзей: пользователь {} удаляет пользователя {}", userId, friendId);
 
-        boolean removed1 = user.getFriendships().removeIf(f -> f.getFriendId() == friendId);
-        boolean removed2 = friend.getFriendships().removeIf(f -> f.getFriendId() == userId);
+        userStorage.findById(userId);
+        userStorage.findById(friendId);
 
-        log.debug("Результат удаления: user={}, friend={}", removed1, removed2);
-
-        userStorage.update(user);
-        userStorage.update(friend);
+        // Удаляем связь в обе стороны, на случай если дружба уже была подтверждена
+        userStorage.removeFriend(userId, friendId);
+        log.info("Пользователь успешно удален из друзей");
     }
 
     public Collection<User> getFriends(int userId) {
-        log.info("Получение списка друзей пользователя {}", userId);
-        User user = userStorage.findById(userId);
-
-        // Собираем ID только тех друзей, у которых статус CONFIRMED
-        Collection<Integer> confirmedFriendIds = user.getFriendships().stream()
-                .filter(f -> f.getStatus() == FriendStatus.CONFIRMED)
-                .map(Friendship::getFriendId)
-                .collect(Collectors.toList());
-
-        log.debug("Найдено подтвержденных друзей с ID: {}", confirmedFriendIds);
-        return userStorage.findByIds(confirmedFriendIds);
+        log.info("Запрос на получение списка друзей пользователя с id={}", userId);
+        userStorage.findById(userId); // Проверка существования пользователя
+        return userStorage.getFriends(userId);
     }
 
     public Collection<User> getCommonFriends(int userId, int otherId) {
-        log.info("Поиск общих друзей для пользователей {} и {}", userId, otherId);
-        User user = userStorage.findById(userId);
-        User other = userStorage.findById(otherId);
+        log.info("Запрос на получение общих друзей для пользователей {} и {}", userId, otherId);
 
-        log.debug("Друзья user {}: {}", userId, user.getFriendships());
-        log.debug("Друзья other {}: {}", otherId, other.getFriendships());
+        userStorage.findById(userId);
+        userStorage.findById(otherId);
 
-        Collection<Integer> userFriendIds = user.getFriendships().stream()
-                .filter(f -> f.getStatus() == FriendStatus.CONFIRMED)
-                .map(Friendship::getFriendId)
-                .collect(Collectors.toList());
-
-        Collection<Integer> otherFriendIds = other.getFriendships().stream()
-                .filter(f -> f.getStatus() == FriendStatus.CONFIRMED)
-                .map(Friendship::getFriendId)
-                .collect(Collectors.toList());
-
-        userFriendIds.retainAll(otherFriendIds);
-
-        Collection<User> commonFriends = userStorage.findByIds(userFriendIds);
-
-        log.info("Найдено {} общих друзей для пользователей {} и {}", commonFriends.size(), userId, otherId);
-        return commonFriends;
+        return userStorage.getCommonFriends(userId, otherId);
     }
 
     private void validateUser(User user) {
+        if (user.getEmail() == null || user.getEmail().isBlank() || !user.getEmail().contains("@")) {
+            throw new ValidationException("Электронная почта не может быть пустой и должна содержать символ '@'");
+        }
         if (user.getLogin() == null || user.getLogin().isBlank() || user.getLogin().contains(" ")) {
             throw new ValidationException("Логин не может быть пустым и содержать пробелы");
+        }
+        if (user.getBirthday() != null && user.getBirthday().isAfter(java.time.LocalDate.now())) {
+            throw new ValidationException("Дата рождения не может быть в будущем");
         }
     }
 }
