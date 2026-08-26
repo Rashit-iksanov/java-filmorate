@@ -167,9 +167,10 @@ public class UserDbStorage implements UserStorage {
 
     @Override
     public void removeFriend(int userId, int friendId) {
-        String sql = "DELETE FROM friendships WHERE (user_id = ? AND friend_id = ?) " +
-                "OR (user_id = ? AND friend_id = ?)";
-        jdbcTemplate.update(sql, userId, friendId, friendId, userId);
+        log.debug("Удаление из друзей: пользователь {} удаляет пользователя {}", userId, friendId);
+
+        String sql = "DELETE FROM friendships WHERE user_id = ? AND friend_id = ?";
+        jdbcTemplate.update(sql, userId, friendId);
     }
 
     private User mapRowToUser(ResultSet rs, int rowNum) throws SQLException {
