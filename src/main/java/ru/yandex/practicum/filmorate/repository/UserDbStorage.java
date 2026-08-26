@@ -157,18 +157,12 @@ public class UserDbStorage implements UserStorage {
     @Override
     public void approveFriend(int userId, int friendId) {
         log.debug("Пользователь {} подтверждает дружбу с пользователем {}", userId, friendId);
-
-        // 1. Меняем статус входящей заявки от friendId на 'confirmed'
         jdbcTemplate.update(
                 "UPDATE friendships SET status = 'confirmed' WHERE user_id = ? AND friend_id = ?",
-                friendId, userId
-        );
-
-        // 2. Добавляем friendId в список друзей пользователя userId (теперь дружба взаимна)
+                friendId, userId);
         jdbcTemplate.update(
                 "INSERT INTO friendships (user_id, friend_id, status) VALUES (?, ?, 'confirmed')",
-                userId, friendId
-        );
+                userId, friendId);
     }
 
     @Override
