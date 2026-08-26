@@ -54,29 +54,34 @@ class UserDbStorageTest {
 
     @Test
     void testOneWayFriendship() {
+        // 1. Создаем двух пользователей
         User userA = userStorage.create(createUser("a@mail.ru", "userA", "User A"));
         User userB = userStorage.create(createUser("b@mail.ru", "userB", "User B"));
 
-        // 1. User A отправляет заявку User B
+        // 2. User A отправляет заявку в друзья User B (добавляет в СВОЙ список)
         userStorage.addFriend(userA.getId(), userB.getId());
 
-        // У User A друзей пока нет (статус unconfirmed)
-        assertThat(userStorage.getFriends(userA.getId())).isEmpty();
-        // У User B друзей тоже нет
-        assertThat(userStorage.getFriends(userB.getId())).isEmpty();
-
-        // 2. User B подтверждает заявку User A
-        userStorage.approveFriend(userB.getId(), userA.getId());
-
-        // 3. Проверяем односторонность:
-        // У User A теперь есть друг User B (потому что A отправлял заявку, и она подтверждена)
+        // 3. ПРОВЕРКА ПО ТЗ: User A видит User B в своем списке друзей сразу после добавления
         Collection<User> friendsOfA = userStorage.getFriends(userA.getId());
         assertThat(friendsOfA).hasSize(1);
         assertThat(friendsOfA.iterator().next().getLogin()).isEqualTo("userB");
 
-        // У User B НЕТ друга User A (потому что B не отправлял заявку А)
+        // 4. ПРОВЕРКА ПО ТЗ: User B НЕ видит User A в своем списке (заявка еще не подтверждена)
         Collection<User> friendsOfB = userStorage.getFriends(userB.getId());
         assertThat(friendsOfB).isEmpty();
+
+        // 5. User B подтверждает дружбу (теперь они должны видеть друг друга)
+        userStorage.approveFriend(userB.getId(), userA.getId());
+
+        // 6. ПРОВЕРКА: Теперь User B тоже видит User A в своем списке друзей
+        Collection<User> friendsOfBAfterConfirm = userStorage.getFriends(userB.getId());
+        assertThat(friendsOfBAfterConfirm).hasSize(1);
+        assertThat(friendsOfBAfterConfirm.iterator().next().getLogin()).isEqualTo("userA");
+
+        // 7. ПРОВЕРКА: User A по-прежнему видит User B у себя
+        Collection<User> friendsOfAAfterConfirm = userStorage.getFriends(userA.getId());
+        assertThat(friendsOfAAfterConfirm).hasSize(1);
+        assertThat(friendsOfAAfterConfirm.iterator().next().getLogin()).isEqualTo("userB");
     }
 
     @Test

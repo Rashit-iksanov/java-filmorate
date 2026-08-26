@@ -115,43 +115,33 @@ public class UserDbStorage implements UserStorage {
 
         if (!statuses.isEmpty()) {
             // 2. Если да, то это взаимное добавление (подтверждение дружбы)!
-            log.info("Подтверждение дружбы между {} и {}", userId, friendId);
+            log.info("Подтверждение дружбы: user {} подтверждает заявку от user {}", userId, friendId);
 
-            // Обновляю существующую заявку на 'confirmed'
+            // Обновляем существующую заявку от friendId к userId на 'confirmed'
             jdbcTemplate.update(
                     "UPDATE friendships SET status = 'confirmed' WHERE user_id = ? AND friend_id = ?",
                     friendId, userId
             );
-            // Создаю запись для текущего пользователя, чтобы дружба отображалась у обоих
+            // Создаем запись от userId к friendId тоже со статусом 'confirmed'
             jdbcTemplate.update(
-                    "MERGE INTO friendships (user_id, friend_id, status) KEY (user_id, friend_id) VALUES (?, ?, 'confirmed')",
+                    "MERGE INTO friendships (user_id, friend_id, status) KEY (user_id, friend_id) " +
+                            "VALUES (?, ?, 'confirmed')",
                     userId, friendId
             );
         } else {
-            // 3. Это первая заявка, создаю её со статусом 'unconfirmed'
+            // 3. Это первая заявка, создаем её со статусом 'unconfirmed' (односторонняя дружба)
             log.info("Создание новой заявки в друзья от {} к {}", userId, friendId);
             jdbcTemplate.update(
-                    "MERGE INTO friendships (user_id, friend_id, status) KEY (user_id, friend_id) VALUES (?, ?, 'unconfirmed')",
+                    "MERGE INTO friendships (user_id, friend_id, status) KEY (user_id, friend_id) " +
+                            "VALUES (?, ?, 'unconfirmed')",
                     userId, friendId
             );
         }
     }
 
     @Override
-    public void approveFriend(int userId, int friendId) {
-        String sql = "UPDATE friendships SET status = 'confirmed' WHERE user_id = ? AND friend_id = ?";
-        jdbcTemplate.update(sql, friendId, userId);
-    }
-
-    @Override
-    public void removeFriend(int userId, int friendId) {
-        String sql = "DELETE FROM friendships WHERE (user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)";
-        jdbcTemplate.update(sql, userId, friendId, friendId, userId);
-    }
-
-    @Override
     public Collection<User> getFriends(int userId) {
-        String sql = "SELECT u.* FROM users u JOIN friendships f ON u.id = f.friend_id WHERE f.user_id = ? AND f.status = 'confirmed'";
+        String sql = "SELECT u.* FROM users u JOIN friendships f ON u.id = f.friend_id WHERE f.user_id = ?";
         return jdbcTemplate.query(sql, this::mapRowToUser, userId);
     }
 
@@ -160,8 +150,32 @@ public class UserDbStorage implements UserStorage {
         String sql = "SELECT u.* FROM users u " +
                 "JOIN friendships f1 ON u.id = f1.friend_id " +
                 "JOIN friendships f2 ON u.id = f2.friend_id " +
-                "WHERE f1.user_id = ? AND f2.user_id = ? AND f1.status = 'confirmed' AND f2.status = 'confirmed'";
+                "WHERE f1.user_id = ? AND f2.user_id = ?";
         return jdbcTemplate.query(sql, this::mapRowToUser, userId, otherId);
+    }
+
+    @Override
+    public void approveFriend(int userId, int friendId) {
+        log.debug("Пользователь {} подтверждает дружбу с пользователем {}", userId, friendId);
+
+        // 1. Меняем статус входящей заявки от friendId на 'confirmed'
+        jdbcTemplate.update(
+                "UPDATE friendships SET status = 'confirmed' WHERE user_id = ? AND friend_id = ?",
+                friendId, userId
+        );
+
+        // 2. Добавляем friendId в список друзей пользователя userId (теперь дружба взаимна)
+        jdbcTemplate.update(
+                "INSERT INTO friendships (user_id, friend_id, status) VALUES (?, ?, 'confirmed')",
+                userId, friendId
+        );
+    }
+
+    @Override
+    public void removeFriend(int userId, int friendId) {
+        String sql = "DELETE FROM friendships WHERE (user_id = ? AND friend_id = ?) " +
+                "OR (user_id = ? AND friend_id = ?)";
+        jdbcTemplate.update(sql, userId, friendId, friendId, userId);
     }
 
     private User mapRowToUser(ResultSet rs, int rowNum) throws SQLException {

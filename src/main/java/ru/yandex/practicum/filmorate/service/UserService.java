@@ -50,7 +50,7 @@ public class UserService {
         return userStorage.findById(id);
     }
 
-    public void addFriend(int userId, int friendId) {
+    public User addFriend(int userId, int friendId) {
         log.info("Начало операции добавления в друзья: user {} -> friend {}", userId, friendId);
         if (userId == friendId) {
             log.warn("Попытка добавить пользователя {} в друзья самому себе", userId);
@@ -60,6 +60,8 @@ public class UserService {
         userStorage.findById(userId);
         userStorage.findById(friendId);
         userStorage.addFriend(userId, friendId); // Односторонняя запись!
+
+        return userStorage.findById(userId);
     }
 
     public void approveFriend(int userId, int friendId) {
