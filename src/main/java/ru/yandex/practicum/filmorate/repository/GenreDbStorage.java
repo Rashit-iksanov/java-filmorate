@@ -6,20 +6,34 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.model.Genre;
 
-import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor
-public class GenreDbStorage {
+public class GenreDbStorage implements GenreRepository {
     private final JdbcTemplate jdbcTemplate;
 
-    public Collection<Genre> findAll() {
-        return jdbcTemplate.query("SELECT * FROM genres ORDER BY id", genreRowMapper());
+    private static final String SQL_FIND_ALL_GENRES =
+            "SELECT id, name FROM genres ORDER BY id";
+
+    private static final String SQL_FIND_GENRE_BY_ID =
+            "SELECT id, name FROM genres WHERE id = ?";
+
+    @Override
+    public List<Genre> findAll() {
+        return jdbcTemplate.query(SQL_FIND_ALL_GENRES, genreRowMapper());
     }
 
+    @Override
     public Optional<Genre> findById(int id) {
-        return jdbcTemplate.query("SELECT * FROM genres WHERE id = ?", genreRowMapper(), id).stream().findFirst();
+        List<Genre> genres = jdbcTemplate.query(
+                SQL_FIND_GENRE_BY_ID,
+                genreRowMapper(),
+                id
+        );
+
+        return genres.stream().findFirst();
     }
 
     private RowMapper<Genre> genreRowMapper() {
