@@ -1,0 +1,131 @@
+$kind: http-request
+url: "{{baseUrl}}/mpa"
+method: GET
+headers:
+  Accept: "*/*"
+scripts:
+  - type: afterResponse
+    code: "// --- MPA get All (order-agnostic, US or RU) ---\r
+
+      \r
+
+      pm.test(\"Status code is 200\", function () {\r
+
+      \    pm.response.to.be.ok;\r
+
+      });\r
+
+      \r
+
+      pm.test(\"Response is JSON array of 5 items\", function () {\r
+
+      \    pm.response.to.be.withBody;\r
+
+      \    pm.response.to.be.json;\r
+
+      \r
+
+      \    const json = pm.response.json();\r
+
+      \    pm.expect(Array.isArray(json), \"Body must be an array\").to.be.true;\r
+
+      \    pm.expect(json.length, \"List length must be 5\").to.eql(5);\r
+
+      \r
+
+      \    json.forEach((item, idx) => {\r
+
+      \        pm.expect(item, `Item[${idx}] must be an object`).to.be.an(\"object\");\r
+
+      \        pm.expect(item).to.have.property(\"id\");\r
+
+      \        pm.expect(item).to.have.property(\"name\");\r
+
+      \        pm.expect(item.id, `Item[${idx}].id must be a number`).to.be.a(\"number\");\r
+
+      \        pm.expect(item.name, `Item[${idx}].name must be a string`).to.be.a(\"string\");\r
+
+      \    });\r
+
+      \r
+
+      \    // Проверяем дубликаты id\r
+
+      \    const ids = json.map(o => o.id);\r
+
+      \    pm.expect(new Set(ids).size, \"IDs must be unique\").to.eql(ids.length);\r
+
+      });\r
+
+      \r
+
+      pm.test(\"Set of id→name matches either US or RU rating set\", function () {\r
+
+      \    const MPAS_US = {\r
+
+      \        1: \"G\",\r
+
+      \        2: \"PG\",\r
+
+      \        3: \"PG-13\",\r
+
+      \        4: \"R\",\r
+
+      \        5: \"NC-17\"\r
+
+      \    };\r
+
+      \    const MPAS_RU = {\r
+
+      \        1: \"0+\",\r
+
+      \        2: \"6+\",\r
+
+      \        3: \"12+\",\r
+
+      \        4: \"16+\",\r
+
+      \        5: \"18+\"\r
+
+      \    };\r
+
+      \r
+
+      \    const json = pm.response.json();\r
+
+      \    const received = Object.fromEntries(json.map(o => [o.id, o.name]));\r
+
+      \r
+
+      \    const equals = (a, b) => {\r
+
+      \        const aKeys = Object.keys(a).sort();\r
+
+      \        const bKeys = Object.keys(b).sort();\r
+
+      \        if (aKeys.length !== bKeys.length) return false;\r
+
+      \        for (let i = 0; i < aKeys.length; i++) {\r
+
+      \            if (aKeys[i] !== bKeys[i]) return false;\r
+
+      \            const k = aKeys[i];\r
+
+      \            if (a[k] !== b[k]) return false;\r
+
+      \        }\r
+
+      \        return true;\r
+
+      \    };\r
+
+      \r
+
+      \    const ok = equals(received, MPAS_US) || equals(received, MPAS_RU);\r
+
+      \    pm.expect(ok, \"Result must exactly match US or RU set (order-agnostic)\").to.be.true;\r
+
+      });"
+    language: text/javascript
+examples: ./.resources/MPA get All.resources/examples
+order: 3000

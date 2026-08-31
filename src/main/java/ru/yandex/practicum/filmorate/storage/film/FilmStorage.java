@@ -12,4 +12,10 @@ public interface FilmStorage {
     Collection<Film> findAll();
 
     Film findById(int id);
+
+    void addLike(int filmId, int userId);
+
+    void removeLike(int filmId, int userId);
+
+    Collection<Film> getPopular(int count);
 }

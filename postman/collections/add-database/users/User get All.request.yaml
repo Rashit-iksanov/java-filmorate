@@ -1,0 +1,32 @@
+$kind: http-request
+url: "{{baseUrl}}/users"
+method: GET
+headers:
+  Accept: "*/*"
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"Status code is 200\", function () {\r
+
+      \    pm.response.to.be.ok;\r
+
+      });\r
+
+      pm.test(\"Test list user response\", function () {\r
+
+      \    pm.response.to.be.withBody;\r
+
+      \    pm.response.to.be.json;\r
+
+      });\r
+
+      pm.test(\"Test user[0] 'id' field\", function () {\r
+
+      \    var jsonData = pm.response.json();\r
+
+      \    pm.expect(jsonData[0]).to.have.property('id');\r
+
+      \    pm.expect(jsonData[0].id, '\"id\" must be 1').to.eql(1);\r
+
+      });\r\n"
+    language: text/javascript
+order: 7000

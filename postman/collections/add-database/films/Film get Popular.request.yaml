@@ -1,0 +1,137 @@
+$kind: http-request
+url: "{{baseUrl}}/films/popular?count=1000"
+method: GET
+headers:
+  Accept: "*/*"
+queryParams:
+  count: "1000"
+scripts:
+  - type: afterResponse
+    code: "const film1_id = pm.collectionVariables.get(\"film1_id\");\r
+
+      const film2_id = pm.collectionVariables.get(\"film2_id\");\r
+
+      const film3_id = pm.collectionVariables.get(\"film3_id\");\r
+
+      \r
+
+      pm.test(\"Status code is 200\", function () {\r
+
+      \    pm.response.to.be.ok;\r
+
+      });\r
+
+      pm.test(\"Test list popular film response\", function () {\r
+
+      \    pm.response.to.be.withBody;\r
+
+      \    pm.response.to.be.json;\r
+
+      });\r
+
+      \r
+
+      const index1 = pm.response.json().findIndex(x => x.id == film1_id);\r
+
+      const index2 = pm.response.json().findIndex(x => x.id == film2_id);\r
+
+      const index3 = pm.response.json().findIndex(x => x.id == film3_id);\r
+
+      \r
+
+      pm.test(\"Test films сonsistency\", function () {\r
+
+      \    pm.expect(index1).to.be.above(index2);\r
+
+      \    pm.expect(index1).to.be.above(index3);\r
+
+      \    pm.expect(index3).to.be.above(index2);\r
+
+      });\r
+
+      \r\n"
+    language: text/javascript
+  - type: beforeRequest
+    code: "const main = async () => {\r
+
+      \    const api = new API(pm);\r
+
+      \    const rnd = new RandomUtils();\r
+
+      \r
+
+      \    let user1, user2, user3, film1, film2, film3;\r
+
+      \    try {\r
+
+      \        user1 = await api.addUser(rnd.getUser());\r
+
+      \        user2 = await api.addUser(rnd.getUser());\r
+
+      \        user3 = await api.addUser(rnd.getUser());\r
+
+      \        film1 = await api.addFilm(rnd.getFilm());\r
+
+      \        film2 = await api.addFilm(rnd.getFilm());\r
+
+      \        film3 = await api.addFilm(rnd.getFilm());\r
+
+      \        await api.addLike(film2.id, user1.id);\r
+
+      \        await api.addLike(film2.id, user2.id);\r
+
+      \        await api.addLike(film2.id, user3.id);\r
+
+      \        await api.addLike(film3.id, user1.id);\r
+
+      \        await api.addLike(film3.id, user2.id);\r
+
+      \        await api.addLike(film1.id, user1.id);\r
+
+      \        pm.collectionVariables.set(\"film1_id\", film1.id);\r
+
+      \        pm.collectionVariables.set(\"film2_id\", film2.id);\r
+
+      \        pm.collectionVariables.set(\"film3_id\", film3.id);\r
+
+      \    } catch(err) {\r
+
+      \        console.error(\"Ошибка при подготовке тестовых данных.\", err);\r
+
+      \    }\r
+
+      \r
+
+      };\r
+
+      \r
+
+      const interval = setInterval(() => {}, 1000);\r
+
+      \r
+
+      setTimeout(async () => \r
+
+      \    {\r
+
+      \        try {\r
+
+      \            await main();\r
+
+      \        } catch (e) {\r
+
+      \            console.error(e);\r
+
+      \        } finally {\r
+
+      \            clearInterval(interval);\r
+
+      \        }\r
+
+      \    },  \r
+
+      \    100 \r
+
+      );"
+    language: text/javascript
+order: 12000

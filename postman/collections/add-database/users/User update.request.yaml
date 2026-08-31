@@ -1,0 +1,159 @@
+$kind: http-request
+url: "{{baseUrl}}/users"
+method: PUT
+headers:
+  Content-Type: application/json
+  Accept: "*/*"
+body:
+  type: json
+  content: ""
+scripts:
+  - type: afterResponse
+    code: "const source = pm.collectionVariables.get(\"user\")\r
+
+      const new_user_info = pm.collectionVariables.get(\"new_user_info\");\r
+
+      \r
+
+      pm.test(\"Status code is 200\", function () {\r
+
+      \    pm.response.to.be.ok;\r
+
+      });\r
+
+      pm.test(\"Has user update response\", function () {\r
+
+      \    pm.response.to.be.withBody;\r
+
+      \    pm.response.to.be.json;\r
+
+      });\r
+
+      pm.test(\"Test user 'id' field\", function () {\r
+
+      \    var jsonData = pm.response.json();\r
+
+      \    pm.expect(jsonData).to.have.property('id');\r
+
+      \    pm.expect(jsonData.id, `\"id\" must be ${source.id}`).to.eql(source.id);\r
+
+      });\r
+
+      pm.test(\"Test user 'email' field\", function () {\r
+
+      \    var jsonData = pm.response.json();\r
+
+      \    pm.expect(jsonData).to.have.property('email');\r
+
+      \    pm.expect(jsonData.email, `\"email\" must be \"${new_user_info.email}\"`).to.eql(new_user_info.email);\r
+
+      });\r
+
+      pm.test(\"Test user 'name' field\", function () {\r
+
+      \    var jsonData = pm.response.json();\r
+
+      \    pm.expect(jsonData).to.have.property('name');\r
+
+      \    pm.expect(jsonData.name, `\"name\" must be \"${new_user_info.name}\"`).to.eql(new_user_info.name);\r
+
+      });\r
+
+      pm.test(\"Test user 'login' field\", function () {\r
+
+      \    var jsonData = pm.response.json();\r
+
+      \    pm.expect(jsonData).to.have.property('login');\r
+
+      \    pm.expect(jsonData.login, `\"login\" field must be \"${new_user_info.login}\"`).to.eql(new_user_info.login);    \r
+
+      });\r
+
+      pm.test(\"Test user 'birthday' field\", function () {\r
+
+      \    var jsonData = pm.response.json();\r
+
+      \    pm.expect(jsonData).to.have.property('birthday');\r
+
+      \    pm.expect(jsonData.birthday, `\"birthday\" field must be \"${new_user_info.birthday}\"`).to.eql(new_user_info.birthday);\r
+
+      });"
+    language: text/javascript
+  - type: beforeRequest
+    code: "const main = async () => {\r
+
+      \    const api = new API(pm);\r
+
+      \    const rnd = new RandomUtils();\r
+
+      \r
+
+      \    let user;\r
+
+      \    try {\r
+
+      \        user = await api.addUser(rnd.getUser());\r
+
+      \        pm.collectionVariables.set(\"user\", user);\r
+
+      \    } catch(err) {\r
+
+      \        console.error(\"Ошибка при подготовке тестовых данных.\", err);\r
+
+      \    }\r
+
+      \r
+
+      \    let new_user_info = rnd.getUser();\r
+
+      \    pm.collectionVariables.set(\"new_user_info\", new_user_info);\r
+
+      \    new_user_info[\"id\"] = user.id;\r
+
+      \r
+
+      \    pm.request.body.update({\r
+
+      \        mode: 'raw',\r
+
+      \        raw: JSON.stringify(new_user_info),\r
+
+      \        options: { raw: { language: 'json' } }\r
+
+      \    });\r
+
+      \r
+
+      };\r
+
+      \r
+
+      const interval = setInterval(() => {}, 1000);\r
+
+      \r
+
+      setTimeout(async () => \r
+
+      \    {\r
+
+      \        try {\r
+
+      \            await main();\r
+
+      \        } catch (e) {\r
+
+      \            console.error(e);\r
+
+      \        } finally {\r
+
+      \            clearInterval(interval);\r
+
+      \        }\r
+
+      \    },  \r
+
+      \    100 \r
+
+      );"
+    language: text/javascript
+order: 5000

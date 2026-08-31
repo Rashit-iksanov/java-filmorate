@@ -1,0 +1,78 @@
+$kind: http-request
+url: "{{baseUrl}}/genres/{{id}}"
+method: GET
+headers:
+  Accept: "*/*"
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"Status code is 200\", function () {\r
+
+      \    pm.response.to.be.ok;\r
+
+      });\r
+
+      pm.test(\"Get genre response is valid JSON\", function () {\r
+
+      \    pm.response.to.be.withBody;\r
+
+      \    pm.response.to.be.json;\r
+
+      });\r
+
+      \r
+
+      const source = pm.collectionVariables.get(\"source\");\r
+
+      \r
+
+      const GENRES = {\r
+
+      \    1: \"Комедия\",\r
+
+      \    2: \"Драма\",\r
+
+      \    3: \"Мультфильм\",\r
+
+      \    4: \"Триллер\",\r
+
+      \    5: \"Документальный\",\r
+
+      \    6: \"Боевик\"\r
+
+      };\r
+
+      \r
+
+      pm.test(\"Genre object contains correct 'id' and 'name'\", function () {\r
+
+      \    const json = pm.response.json();\r
+
+      \r
+
+      \    pm.expect(json).to.have.property(\"id\");\r
+
+      \    pm.expect(json).to.have.property(\"name\");\r
+
+      \r
+
+      \    pm.expect(json.id, `\"id\" must be ${source}`).to.eql(source);\r
+
+      \r
+
+      \    const expectedName = GENRES[source];\r
+
+      \    pm.expect(expectedName, `Unknown genre id ${source}`).to.not.be.undefined;\r
+
+      \    pm.expect(json.name, `\"name\" must be '${expectedName}'`).to.eql(expectedName);\r
+
+      });\r\n"
+    language: text/javascript
+  - type: beforeRequest
+    code: "const mpa = Math.floor(Math.random() * (6 - 1 + 1) + 1);\r
+
+      pm.collectionVariables.set(\"id\", mpa);\r
+
+      pm.collectionVariables.set(\"source\", mpa)"
+    language: text/javascript
+examples: ./.resources/Get Genre name by id.resources/examples
+order: 1000

@@ -1,0 +1,179 @@
+$kind: http-request
+url: "{{baseUrl}}/films"
+method: POST
+headers:
+  Content-Type: application/json
+  Accept: "*/*"
+body:
+  type: json
+  content: |-
+    {
+      "name": "nisi eiusmod",
+      "description": "adipisicing",
+      "releaseDate": "1967-03-25",
+      "duration": 100
+    }
+scripts:
+  - type: afterResponse
+    code: "const source = JSON.parse(pm.request.body.raw)\r
+
+      \r
+
+      pm.test(\"Status code is 200 or 201\", function () {\r
+
+      \    pm.expect(pm.response.code).to.be.oneOf([200,201]);\r
+
+      });\r
+
+      pm.test(\"Has film create response\", function () {\r
+
+      \    pm.response.to.be.withBody;\r
+
+      \    pm.response.to.be.json;\r
+
+      });\r
+
+      pm.test(\"Test film 'id' field\", function () {\r
+
+      \    var jsonData = pm.response.json();\r
+
+      \    pm.expect(jsonData).to.have.property('id');\r
+
+      });\r
+
+      pm.test(\"Test film 'name' field\", function () {\r
+
+      \    var jsonData = pm.response.json();\r
+
+      \    pm.expect(jsonData).to.have.property('name');\r
+
+      \    pm.expect(jsonData.name, `\"name\" must be \"${source.name}\"`).to.eql(source.name);\r
+
+      });\r
+
+      pm.test(\"Test film 'description' field\", function () {\r
+
+      \    var jsonData = pm.response.json();\r
+
+      \    pm.expect(jsonData).to.have.property('description');\r
+
+      \    pm.expect(jsonData.description, `\"description\" must be \"${source.description}\"`).to.eql(source.description);\r
+
+      });\r
+
+      pm.test(\"Test film 'releaseDate' field\", function () {\r
+
+      \    var jsonData = pm.response.json();\r
+
+      \    pm.expect(jsonData).to.have.property('releaseDate');\r
+
+      \    pm.expect(jsonData.releaseDate, `\"releaseDate\" field must be \"${source.releaseDate}\"`).to.eql(source.releaseDate);\r
+
+      });\r
+
+      pm.test(\"Test film 'duration' field\", function () {\r
+
+      \    var jsonData = pm.response.json();\r
+
+      \    pm.expect(jsonData).to.have.property('duration');\r
+
+      \    pm.expect(jsonData.duration, `\"duration\" field must be %{source.duration}`).to.eql(source.duration);    \r
+
+      });\r
+
+      pm.test(\"Test film 'mpa' field\", function () {\r
+
+      \    var jsonData = pm.response.json();\r
+
+      \    pm.expect(jsonData).to.have.property('mpa');\r
+
+      \    pm.expect(jsonData.mpa.id, `\"mpa.id\" field must be %{source.mpa.id}`).to.eql(source.mpa.id);    \r
+
+      });\r
+
+      pm.test(\"Test film 'genres' field\", function () {\r
+
+      \    var jsonData = pm.response.json();\r
+
+      \    let responseGenres = [];\r
+
+      \    let requestGenres = [];\r
+
+      \    source.genres.forEach((element) => requestGenres.push(element.id));\r
+
+      \    jsonData.genres.forEach((element) => responseGenres.push(element.id));\r
+
+      \    pm.expect(jsonData).to.have.property('genres');\r
+
+      \    pm.expect(responseGenres, `\"genres\" field must be %{requestGenres}`).to.eql(requestGenres);    \r
+
+      });\r
+
+      \r\n"
+    language: text/javascript
+  - type: beforeRequest
+    code: "const main = async () => {\r
+
+      \    const api = new API(pm);\r
+
+      \    const rnd = new RandomUtils();\r
+
+      \r
+
+      \    let film;\r
+
+      \    try {\r
+
+      \        film = rnd.getFilm();\r
+
+      \    } catch(err) {\r
+
+      \        console.error(\"Ошибка при подготовке тестовых данных.\", err);\r
+
+      \    }\r
+
+      \r
+
+      \    pm.request.body.update({\r
+
+      \        mode: 'raw',\r
+
+      \        raw: JSON.stringify(film),\r
+
+      \        options: { raw: { language: 'json' } }\r
+
+      \    });\r
+
+      };\r
+
+      \r
+
+      const interval = setInterval(() => {}, 1000);\r
+
+      \r
+
+      setTimeout(async () => \r
+
+      \    {\r
+
+      \        try {\r
+
+      \            await main();\r
+
+      \        } catch (e) {\r
+
+      \            console.error(e);\r
+
+      \        } finally {\r
+
+      \            clearInterval(interval);\r
+
+      \        }\r
+
+      \    },  \r
+
+      \    100 \r
+
+      );"
+    language: text/javascript
+order: 1000

@@ -1,0 +1,114 @@
+$kind: http-request
+url: "{{baseUrl}}/users"
+method: PUT
+headers:
+  Content-Type: application/json
+  Accept: "*/*"
+body:
+  type: json
+  content: |-
+    {
+      "login": "doloreUpdate",
+      "name": "est adipisicing",
+      "id": 9999,
+      "email": "mail@yandex.ru",
+      "birthday": "1976-09-20"
+    }
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"Status code is 404\", function () {\r
+
+      \    pm.expect(pm.response.code).to.be.equal(404);\r
+
+      });\r
+
+      pm.test(\"Has error response\", function () {\r
+
+      \    pm.response.to.be.withBody;\r
+
+      \    pm.response.to.be.json;\r
+
+      });"
+    language: text/javascript
+  - type: beforeRequest
+    code: "const main = async () => {\r
+
+      \    const api = new API(pm);\r
+
+      \    const rnd = new RandomUtils();\r
+
+      \r
+
+      \    let user;\r
+
+      \    try {\r
+
+      \        user = await api.addUser(rnd.getUser());\r
+
+      \        pm.collectionVariables.set(\"user\", user);\r
+
+      \    } catch(err) {\r
+
+      \        console.error(\"Ошибка при подготовке тестовых данных.\", err);\r
+
+      \    }\r
+
+      \r
+
+      \    pm.request.body.update({\r
+
+      \        mode: 'raw',\r
+
+      \        raw: JSON.stringify({\r
+
+      \            \"login\": \"doloreUpdate\",\r
+
+      \            \"name\": \"est adipisicing\",\r
+
+      \            \"id\": user.id+1,\r
+
+      \            \"email\": \"mail@yandex.ru\",\r
+
+      \            \"birthday\": \"1976-09-20\"\r
+
+      \            }),\r
+
+      \        options: { raw: { language: 'json' } }\r
+
+      \    });\r
+
+      \r
+
+      };\r
+
+      \r
+
+      const interval = setInterval(() => {}, 1000);\r
+
+      \r
+
+      setTimeout(async () => \r
+
+      \    {\r
+
+      \        try {\r
+
+      \            await main();\r
+
+      \        } catch (e) {\r
+
+      \            console.error(e);\r
+
+      \        } finally {\r
+
+      \            clearInterval(interval);\r
+
+      \        }\r
+
+      \    },  \r
+
+      \    100 \r
+
+      );"
+    language: text/javascript
+order: 6000
